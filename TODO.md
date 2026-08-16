@@ -1,0 +1,3 @@
+- Can probably make a shared Actions deployment workflow in chrisbridewell-infrastruture & point at it from the other projects
+- Create an ENUMS package for certain things (environment, project name, whatever else)
+- Move some resources into core infrastructure (cognito, probably others)
