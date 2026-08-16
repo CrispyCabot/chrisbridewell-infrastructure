@@ -1,11 +1,11 @@
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { Fn, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 
 export class AuthConstruct extends Construct {
   readonly userPool: cognito.UserPool;
-  readonly hostedDomain = 'poster-walls-0affce8adf47';
+  readonly hostedDomain: string;
 
   get userPoolId(): string {
     return this.userPool.userPoolId;
@@ -61,6 +61,26 @@ export class AuthConstruct extends Construct {
         preventUserExistenceErrors: true,
       })
       .applyRemovalPolicy(RemovalPolicy.RETAIN);
+
+    // Cognito domain prefixes are globally unique per region, so they need a
+    // unique component — but NOT the account ID, because this prefix appears
+    // in a public login URL. Use the trailing group of the stack's UUID:
+    // equally unique, reveals nothing.
+    //
+    // stackId: arn:aws:cloudformation:us-east-1:<acct>:stack/<name>/<uuid>
+    const stackUuid = Fn.select(2, Fn.split('/', Stack.of(this).stackId));
+    const uniqueSuffix = Fn.select(4, Fn.split('-', stackUuid));
+    this.hostedDomain = `chrisbridewell-${uniqueSuffix}`;
+
+    // NOTE: a pool holds only ONE domain, and CloudFormation replaces
+    // create-before-delete. Changing this prefix later therefore fails in a
+    // single deploy — it must be done as two deploys (remove, then re-add),
+    // with login broken in between. (This is the domain recreation itself,
+    // household-manager spec §2 — the old poster-walls-… domain was already
+    // deleted out of band, so this deploy is the create side.)
+    this.userPool.addDomain('Domain', {
+      cognitoDomain: { domainPrefix: this.hostedDomain },
+    });
 
     new ssm.StringParameter(this, 'UserPoolIdParam', {
       parameterName: '/core/auth/user-pool-id',
