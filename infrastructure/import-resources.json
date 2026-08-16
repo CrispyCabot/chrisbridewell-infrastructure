@@ -1,0 +1,9 @@
+{
+  "AuthUserPool8115E87F": {
+    "UserPoolId": "us-east-1_1w3Dv2paU"
+  },
+  "AuthUserPoolPosterWallsClient32186D89": {
+    "UserPoolId": "us-east-1_1w3Dv2paU",
+    "ClientId": "5gpb7s7ma6jv08rvag4q5fn6a8"
+  }
+}
